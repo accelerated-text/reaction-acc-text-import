@@ -1,6 +1,6 @@
 import { Products } from "/lib/collections";
 import Logger from "@reactioncommerce/logger";
-import publishProductToCatalogById from "/imports/plugins/core/catalog/server/utils/publishProductToCatalogById";
+import publishProductToCatalogById from "/imports/node-app/core-services/catalog/utils/publishProductsToCatalog.js";
 import getGraphQLContextInMeteorMethod from "/imports/plugins/core/graphql/server/getGraphQLContextInMeteorMethod";
 
 function getContext() {
