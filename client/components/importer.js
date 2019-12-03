@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
-import { Button, SettingsCard } from "@reactioncommerce/reaction-ui";
+import { Button, SettingsCard } from "/imports/plugins/core/ui/client/components";
 
 class Importer extends Component {
     render(){
