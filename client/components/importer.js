@@ -3,6 +3,7 @@ import { Meteor } from "meteor/meteor";
 import { Button, SettingsCard } from "/imports/plugins/core/ui/client/components";
 
 import ReactFileReader from "react-file-reader";
+import Papa from "papaparse";
 
 const documentPlans = [{title: "Books", id: "d24711ba-0c13-4792-a8cb-61141e85778b"}]
 
@@ -46,9 +47,10 @@ class Importer extends Component {
 
   handleFiles = files => {
     var reader = new FileReader();
+    var self = this;
     reader.onload = function(e) {
-      // Use reader.result
-      console.log(reader.result)
+      const csv = Papa.parse(reader.result, { header: true, skipEmptyLines: true, delimiter: ","});
+      self.state.data = csv.data;
     }
     reader.readAsText(files[0]);
   };
@@ -56,8 +58,11 @@ class Importer extends Component {
   handleSubmit = e => {
     e.preventDefault();
     const { data, documentPlanId } = this.state;
-    const rows = {testProduct: {title: "Misery", author: "Stephen King"}};
-    const request = { documentPlanId: documentPlanId, dataRows: rows, readerFlagValues: {} };
+    const dataRows = data.reduce((obj, item) => {
+      obj[item.productId] = item;
+      return obj;
+    }, {});
+    const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {} };
     console.log(request);
     const conf = {
       method: "post",
@@ -73,12 +78,12 @@ class Importer extends Component {
   render(){
     return (<div>
             <h1>Accelerated Text Import</h1>
-            <form onSubmit={this.handleSubmit}>
             <div>
             <ReactFileReader handleFiles={this.handleFiles}>
               <button className='btn'>Upload Product CSV</button>
             </ReactFileReader>
             </div>
+            <form onSubmit={this.handleSubmit}>
             <div>
               <label>Description Type</label>
               <select
