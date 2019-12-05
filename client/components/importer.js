@@ -2,11 +2,13 @@ import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
 import { Button, SettingsCard } from "/imports/plugins/core/ui/client/components";
 
+const documentPlans = [{title: "Books", id: "d24711ba-0c13-4792-a8cb-61141e85778b"}]
+
 class Importer extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {descriptionType: "books"};
+    this.state = {documentPlanId: documentPlans[0].id, data: {}};
     this.accTextUrl = "http://localhost:3001/nlg";
     
     this.handleChange = this.handleChange.bind(this);
@@ -17,6 +19,10 @@ class Importer extends Component {
     this.setState({ [e.target.name]: e.target.value });
     return this.state;
   };
+
+  documentPlansSelect = () => {
+    return documentPlans.map(e => <option value={e.id}>{e.title}</option>);
+  }
 
   readResult = resultId => {
     console.log(`Reading data from ${resultId}`);
@@ -38,9 +44,9 @@ class Importer extends Component {
 
   handleSubmit = e => {
     e.preventDefault();
-    const { data, descriptionType } = this.state;
+    const { data, documentPlanId } = this.state;
     const rows = {testProduct: {title: "Misery", author: "Stephen King"}};
-    const request = { documentPlanId: "1d1f6f14-fb26-4ebb-83f2-26e4b2e00a0b", dataRows: rows, readerFlagValues: {} };
+    const request = { documentPlanId: documentPlanId, dataRows: rows, readerFlagValues: {} };
     console.log(request);
     const conf = {
       method: "post",
@@ -67,10 +73,9 @@ class Importer extends Component {
             <div>
               <label>Description Type</label>
               <select
-                name="descriptionType"
+                name="documentPlanId"
                 onChange={this.handleChange}>
-                <option value="books">Books</option>
-                <option value="food">Food</option>
+                {this.documentPlansSelect()}
               </select>
             </div>
             <div>
