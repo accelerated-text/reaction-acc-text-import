@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
 import { Button, SettingsCard } from "/imports/plugins/core/ui/client/components";
 
+import ReactFileReader from "react-file-reader";
+
 const documentPlans = [{title: "Books", id: "d24711ba-0c13-4792-a8cb-61141e85778b"}]
 
 class Importer extends Component {
@@ -42,6 +44,15 @@ class Importer extends Component {
     
   };
 
+  handleFiles = files => {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      // Use reader.result
+      console.log(reader.result)
+    }
+    reader.readAsText(files[0]);
+  };
+
   handleSubmit = e => {
     e.preventDefault();
     const { data, documentPlanId } = this.state;
@@ -64,11 +75,9 @@ class Importer extends Component {
             <h1>Accelerated Text Import</h1>
             <form onSubmit={this.handleSubmit}>
             <div>
-              <label>Input CSV</label>
-              <input
-                type="file"
-                name="data"
-                onChange={this.handleChange}/>
+            <ReactFileReader handleFiles={this.handleFiles}>
+              <button className='btn'>Upload Product CSV</button>
+            </ReactFileReader>
             </div>
             <div>
               <label>Description Type</label>
