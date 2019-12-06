@@ -12,6 +12,10 @@ const dpQuery = `{
   }
 }`
 
+const buildProduct = (productId, data, desc) => {
+  console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc}`);
+};
+
 class DocumentPlanSelect extends Component {
   constructor(props){
     super(props);
@@ -69,7 +73,9 @@ class Importer extends Component {
       .then(response => response.json())
       .then(body => {
             if(body.ready){
-              console.log(body);
+              Object.entries(body.variants).forEach(([k, v]) => {
+                buildProduct(k, this.state.dataRows[k], v);
+              });
             }
             else{
               console.log("NLG result is not ready yet. Retry after second")
@@ -86,7 +92,7 @@ class Importer extends Component {
     var self = this;
     reader.onload = e => {
       const csv = Papa.parse(reader.result, { header: true, skipEmptyLines: true, delimiter: ","});
-      this.setState({ data: csv.data, rowCount: csv.data.length - 1 });
+      this.setState({ data: csv.data, rowCount: csv.data.length });
     }
     reader.readAsText(files[0]);
   };
@@ -98,8 +104,9 @@ class Importer extends Component {
       obj[item.productId] = item;
       return obj;
     }, {});
+
+    this.state.dataRows = dataRows;
     const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {} };
-    console.log(request);
     const conf = {
       method: "post",
       body: JSON.stringify(request),
