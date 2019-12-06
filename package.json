@@ -18,6 +18,7 @@
   "homepage": "https://github.com/tokenmill/reaction-acc-text-import#readme",
   "dependencies": {
     "graphql-request": "^1.8.2",
+    "graphql-tag": "^2.10.1",
     "papaparse": "^5.1.0",
     "react-file-reader": "^1.1.4"
   }

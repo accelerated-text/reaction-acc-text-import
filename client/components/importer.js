@@ -1,10 +1,26 @@
 import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
-import { Button, SettingsCard } from "/imports/plugins/core/ui/client/components";
+import { Reaction } from "/client/api";
+import { compose } from "recompose";
+
+import { registerComponent, Components } from "/imports/plugins/core/components/lib/components";
+
+import { withApollo } from "react-apollo";
+import { withRouter } from "react-router";
+import withOpaqueShopId from "/imports/plugins/core/graphql/lib/hocs/withOpaqueShopId";
+
+import PropTypes from "prop-types";
+
+// import getOpaqueIds from "/imports/plugins/core/core/client/util/getOpaqueIds";
+import CreateProductMutation from "../queries/createProduct.graphql";
+import PublishProductMutation from "../queries/publishProduct.graphql";
+import CreateProductVariantMutation from "../queries/createVariant.graphql";
+
+
 
 import ReactFileReader from "react-file-reader";
 import Papa from "papaparse";
-import { request as gql } from "graphql-request";
+import { GraphQLClient } from "graphql-request";
 
 const dpQuery = `{
   documentPlans{
@@ -12,8 +28,38 @@ const dpQuery = `{
   }
 }`
 
-const buildProduct = (productId, data, desc) => {
+const buildProduct = async (shopId, productId, data, desc) => {
   console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc}`);
+  const title = data.title;
+  const endpoint = "http://localhost:3000/graphql-beta";
+  const meteorAuth = localStorage.getItem("Meteor.loginToken");
+
+  const graphQLClient = new GraphQLClient(endpoint, {
+    headers: {
+      "meteor-login-token": meteorAuth
+    }
+  });
+  
+  const createProduct = async (input) => {
+    const variables = { input };
+    return graphQLClient.request(CreateProductMutation, variables);
+  };
+
+  const createVariant = async (input) => {
+    const variables = { input };
+    return graphQLClient.request(CreateProductVariantMutation, variables);
+  };
+
+  const publishProduct = async (productId) => {
+    const variables = { productId };
+    return graphQLClient.request(PublishProductMutation, variables);
+  };
+  
+  // const [shopId] = await getOpaqueIds([{ namespace: "Shop", id: Reaction.getShopId() }]);
+  const product = await createProduct({shopId: shopId}).then(resp => resp.createProduct.product);
+  const variant = await createVariant({productId: product._id, shopId: shopId});
+  console.log(variant);
+  publishProduct(product._id).then(result => console.log(result));
 };
 
 class DocumentPlanSelect extends Component {
@@ -21,8 +67,9 @@ class DocumentPlanSelect extends Component {
     super(props);
     this.accTextGQ = "http://localhost:3001/_graphql";
     this.state = {documentPlans: []};
+    const graphQLClient = new GraphQLClient(this.accTextGQ);
 
-    gql(this.accTextGQ, dpQuery)
+    graphQLClient.request(dpQuery)
       .then(data => {
         this.state.documentPlans = data.documentPlans.items;
         if(this.state.documentPlans.length > 0){
@@ -38,7 +85,7 @@ class DocumentPlanSelect extends Component {
   }
 
   documentPlansSelect = () => {
-    return this.state.documentPlans.map(e => <option value={e.id}>{e.name}</option>);
+    return this.state.documentPlans.map(e => <option key={e.id} value={e.id}>{e.name}</option>);
   }
 
   render() {
@@ -53,6 +100,13 @@ class DocumentPlanSelect extends Component {
 }
 
 class Importer extends Component {
+  static propTypes = {
+    client: PropTypes.object,
+    history: PropTypes.shape({
+      push: PropTypes.func.isRequired
+    }),
+    shopId: PropTypes.string.isRequired
+  }
 
   constructor(props) {
     super(props);
@@ -74,7 +128,7 @@ class Importer extends Component {
       .then(body => {
             if(body.ready){
               Object.entries(body.variants).forEach(([k, v]) => {
-                buildProduct(k, this.state.dataRows[k], v);
+                buildProduct(this.props.shopId, k, this.state.dataRows[k], v);
               });
             }
             else{
@@ -141,4 +195,15 @@ class Importer extends Component {
   }
 }
 
-export default Importer;
+
+registerComponent("Importer", Importer, [
+  withApollo,
+  withRouter,
+  withOpaqueShopId
+]);
+
+export default compose(
+  withApollo,
+  withRouter,
+  withOpaqueShopId
+)(Importer);
