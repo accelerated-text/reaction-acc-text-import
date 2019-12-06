@@ -4,16 +4,56 @@ import { Button, SettingsCard } from "/imports/plugins/core/ui/client/components
 
 import ReactFileReader from "react-file-reader";
 import Papa from "papaparse";
+import { request as gql } from "graphql-request";
 
-const documentPlans = [{title: "Books", id: "d24711ba-0c13-4792-a8cb-61141e85778b"}]
+const dpQuery = `{
+  documentPlans{
+    items{id name}
+  }
+}`
+
+class DocumentPlanSelect extends Component {
+  constructor(props){
+    super(props);
+    this.accTextGQ = "http://localhost:3001/_graphql";
+    this.state = {documentPlans: []};
+
+    gql(this.accTextGQ, dpQuery)
+      .then(data => {
+        this.state.documentPlans = data.documentPlans.items;
+        if(this.state.documentPlans.length > 0){
+          this.props.onSelect({target: {name: "documentPlanId", value: this.state.documentPlans[0].id}});
+        }
+      });
+
+    this.handleChange = this.handleChange.bind(this);
+  }
+
+  handleChange = e => {
+    this.props.onSelect(e);
+  }
+
+  documentPlansSelect = () => {
+    return this.state.documentPlans.map(e => <option value={e.id}>{e.name}</option>);
+  }
+
+  render() {
+    return (
+              <select
+                name="documentPlanId"
+                onChange={this.handleChange}>
+                {this.documentPlansSelect()}
+              </select>
+    );
+  };
+}
 
 class Importer extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {documentPlanId: documentPlans[0].id, data: {}};
+    this.state = {documentPlanId: null, data: {}, rowCount: 0, documentPlans: []};
     this.accTextUrl = "http://localhost:3001/nlg";
-    
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -23,13 +63,9 @@ class Importer extends Component {
     return this.state;
   };
 
-  documentPlansSelect = () => {
-    return documentPlans.map(e => <option value={e.id}>{e.title}</option>);
-  }
-
   readResult = resultId => {
     console.log(`Reading data from ${resultId}`);
-    fetch(`${this.accTextUrl}/${resultId}`, {method: "get"})
+    fetch(`${this.accTextUrl}/${resultId}?format=raw`, {method: "get"})
       .then(response => response.json())
       .then(body => {
             if(body.ready){
@@ -48,9 +84,9 @@ class Importer extends Component {
   handleFiles = files => {
     var reader = new FileReader();
     var self = this;
-    reader.onload = function(e) {
+    reader.onload = e => {
       const csv = Papa.parse(reader.result, { header: true, skipEmptyLines: true, delimiter: ","});
-      self.state.data = csv.data;
+      this.setState({ data: csv.data, rowCount: csv.data.length - 1 });
     }
     reader.readAsText(files[0]);
   };
@@ -83,17 +119,15 @@ class Importer extends Component {
               <button className='btn'>Upload Product CSV</button>
             </ReactFileReader>
             </div>
+            <span>Rows loaded: {this.state.rowCount}</span>
             <form onSubmit={this.handleSubmit}>
             <div>
               <label>Description Type</label>
-              <select
-                name="documentPlanId"
-                onChange={this.handleChange}>
-                {this.documentPlansSelect()}
-              </select>
+              <DocumentPlanSelect
+                onSelect={this.handleChange}/>
             </div>
             <div>
-              <button>Import products</button>
+              <button disabled={this.state.rowCount == 0}>Import products</button>
             </div>
             </form>
             </div>);
