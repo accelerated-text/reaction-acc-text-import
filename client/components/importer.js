@@ -9,9 +9,10 @@ import { withApollo } from "react-apollo";
 import { withRouter } from "react-router";
 import withOpaqueShopId from "/imports/plugins/core/graphql/lib/hocs/withOpaqueShopId";
 
+import getOpaqueIds from "/imports/plugins/core/core/client/util/getOpaqueIds";
+
 import PropTypes from "prop-types";
 
-// import getOpaqueIds from "/imports/plugins/core/core/client/util/getOpaqueIds";
 import CreateProductMutation from "../queries/createProduct.graphql";
 import PublishProductMutation from "../queries/publishProduct.graphql";
 import CreateProductVariantMutation from "../queries/createVariant.graphql";
@@ -56,9 +57,12 @@ const buildProduct = async (shopId, productId, data, desc) => {
   };
 
   // const [shopId] = await getOpaqueIds([{ namespace: "Shop", id: Reaction.getShopId() }]);
-  const product = await createProduct({shopId: shopId}).then(resp => resp.createProduct.product);
-  const variant = await createVariant({productId: product._id, shopId: shopId});
-    Meteor.call("acc-text-import/products/createProduct", {productId: product._id}, "Some desc");
+    const product = await createProduct({shopId: shopId}).then(resp => resp.createProduct.product);
+    console.log(`Setuping ProductId: ${product._id}`);
+    Meteor.call("acc-text-import/products/setupProduct", product._id, {title: "Test"}, "Some desc");
+  // const variant = await createVariant({productId: product._id, shopId: shopId});
+    // Meteor.call("products/updateProductField", product._id, "title", "Test");
+    //Meteor.call("products/updateProductField", product._id, "isVisible", "true");
   // publishProduct(product._id).then(result => console.log(result));
 };
 

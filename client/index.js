@@ -10,5 +10,5 @@ registerOperatorRoute({
     path: "/acc-text-import",
     mainComponent: Importer,
     SidebarIconComponent: (props) => <FontAwesomeIcon icon={faFont} {...props} />,
-    sidebarI18nLabel: "admin.settings.devToolsLabel"
+    sidebarI18nLabel: "acc-text-import.admin.accTextImportLabel"
 });

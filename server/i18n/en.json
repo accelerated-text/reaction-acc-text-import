@@ -1,0 +1,11 @@
+[{
+  "i18n": "en",
+  "ns": "acc-text-import",
+  "translation": {
+    "acc-text-import": {
+      "admin": {
+          "accImportLabel": "Accelerated Text Import Tool"
+      }
+    }
+  }
+}]
