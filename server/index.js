@@ -2,11 +2,16 @@ import { Products } from "/lib/collections";
 import Logger from "@reactioncommerce/logger";
 import Reaction from "/imports/plugins/core/core/server/Reaction";
 import { Meteor } from "meteor/meteor";
+import { check } from "meteor/check";
 //import publishProductToCatalogById from "/imports/node-app/core-services/catalog/utils/publishProductsToCatalog";
 //import getGraphQLContextInMeteorMethod from "/imports/plugins/core/graphql/server/getGraphQLContextInMeteorMethod";
 
 Meteor.methods({
-  "acc-text-import/products/createProduct"(_id, dataRow, desc) {
+  "acc-text-import/products/createProduct"(data, desc) {
+      check(data, {
+          productId: String,
+      });
+      check(desc, String);
     Logger.debug("oh, hello there!");
    }
 });

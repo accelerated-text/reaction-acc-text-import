@@ -39,7 +39,7 @@ const buildProduct = async (shopId, productId, data, desc) => {
       "meteor-login-token": meteorAuth
     }
   });
-  
+
   const createProduct = async (input) => {
     const variables = { input };
     return graphQLClient.request(CreateProductMutation, variables);
@@ -54,12 +54,12 @@ const buildProduct = async (shopId, productId, data, desc) => {
     const variables = { productId };
     return graphQLClient.request(PublishProductMutation, variables);
   };
-  
+
   // const [shopId] = await getOpaqueIds([{ namespace: "Shop", id: Reaction.getShopId() }]);
   const product = await createProduct({shopId: shopId}).then(resp => resp.createProduct.product);
   const variant = await createVariant({productId: product._id, shopId: shopId});
-  console.log(variant);
-  publishProduct(product._id).then(result => console.log(result));
+    Meteor.call("acc-text-import/products/createProduct", {productId: product._id}, "Some desc");
+  // publishProduct(product._id).then(result => console.log(result));
 };
 
 class DocumentPlanSelect extends Component {
