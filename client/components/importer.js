@@ -51,19 +51,25 @@ const buildProduct = async (shopId, productId, data, desc) => {
     return graphQLClient.request(CreateProductVariantMutation, variables);
   };
 
-  const publishProduct = async (productId) => {
-    const variables = { productId };
-    return graphQLClient.request(PublishProductMutation, variables);
-  };
-
-  // const [shopId] = await getOpaqueIds([{ namespace: "Shop", id: Reaction.getShopId() }]);
     const product = await createProduct({shopId: shopId}).then(resp => resp.createProduct.product);
-    console.log(`Setuping ProductId: ${product._id}`);
-    Meteor.call("acc-text-import/products/setupProduct", product._id, {title: "Test"}, "Some desc");
-  // const variant = await createVariant({productId: product._id, shopId: shopId});
-    // Meteor.call("products/updateProductField", product._id, "title", "Test");
-    //Meteor.call("products/updateProductField", product._id, "isVisible", "true");
-  // publishProduct(product._id).then(result => console.log(result));
+    const variant = await createVariant({productId: product._id, shopId: shopId}).then(resp => resp.createProductVariant.variant);
+    console.log(`Setuping ProductId: ${product._id}, variantId: ${variant._id}`);
+    const description = () => {
+      if(desc.length > 0){
+        return _.shuffle(desc)[0];
+      }
+      else{
+        return "";
+      }
+    };
+    try{
+      Meteor.call("acc-text-import/products/setupProduct", product._id, {title: data.title, variantId: variant._id}, description());
+      return true;
+    }
+    catch(error){
+      console.error(error);
+      return false;
+    }
 };
 
 class DocumentPlanSelect extends Component {
@@ -114,7 +120,7 @@ class Importer extends Component {
 
   constructor(props) {
     super(props);
-    this.state = {documentPlanId: null, data: {}, rowCount: 0, documentPlans: []};
+    this.state = {documentPlanId: null, data: {}, rowCount: 0, rowsSuccess: 0, rowsError: 0, documentPlans: []};
     this.accTextUrl = "http://localhost:3001/nlg";
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -132,7 +138,15 @@ class Importer extends Component {
       .then(body => {
             if(body.ready){
               Object.entries(body.variants).forEach(([k, v]) => {
-                buildProduct(this.props.shopId, k, this.state.dataRows[k], v);
+                buildProduct(this.props.shopId, k, this.state.dataRows[k], v)
+                  .then(result => {
+                    if(result){
+                      this.setState({rowsSuccess: this.state.rowsSuccess + 1});
+                    }
+                    else{
+                      this.setState({rowsError: this.state.rowsError + 1});
+                    }
+                  });
               });
             }
             else{
@@ -165,6 +179,7 @@ class Importer extends Component {
 
     this.state.dataRows = dataRows;
     const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {} };
+    this.setState({rowsSuccess: 0, rowsError: 0});
     const conf = {
       method: "post",
       body: JSON.stringify(request),
@@ -195,6 +210,13 @@ class Importer extends Component {
               <button disabled={this.state.rowCount == 0}>Import products</button>
             </div>
             </form>
+            <div>
+              <span>{this.state.rowsSuccess} imported</span>
+              / 
+              <span>{this.state.rowsError} failed</span>
+              / 
+              <span>{this.state.rowCount} total</span>
+            </div>
             </div>);
   }
 }
