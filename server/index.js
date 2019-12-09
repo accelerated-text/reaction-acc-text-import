@@ -26,7 +26,8 @@ Meteor.methods({
         check(data, {
             code: String,
             title: String,
-            variantId: String
+            variantId: String,
+            vendor: String,
         });
         check(desc, String);
         const { id: decodedId } = decodeOpaqueId(_id);
@@ -35,7 +36,8 @@ Meteor.methods({
         Meteor.call("products/updateProductField", decodedId, "title", data.title);
         Meteor.call("products/updateProductField", decodedId, "isVisible", "true");
         Meteor.call("products/updateProductField", decodedId, "description", desc);
-        Meteor.call("products/updateProductField", decodedId, "barcode", code);
+        Meteor.call("products/updateProductField", decodedId, "barcode", data.code);
+        Meteor.call("products/updateProductField", decodedId, "vendor", data.vendor);
         Meteor.call("products/updateProductField", decodedVariantId, "isVisible", "true");
         Meteor.call("products/updateProductField", decodedVariantId, "attributeLabel", "Base");
         Meteor.call("products/updateProductField", decodedVariantId, "title", "Base");
