@@ -14,20 +14,14 @@ import getOpaqueIds from "/imports/plugins/core/core/client/util/getOpaqueIds";
 import PropTypes from "prop-types";
 
 import CreateProductMutation from "../queries/createProduct.graphql";
-import PublishProductMutation from "../queries/publishProduct.graphql";
 import CreateProductVariantMutation from "../queries/createVariant.graphql";
-
+import DocumentPlansQuery from "../queries/documentPlans.graphql";
 
 
 import ReactFileReader from "react-file-reader";
 import Papa from "papaparse";
 import { GraphQLClient } from "graphql-request";
 
-const dpQuery = `{
-  documentPlans{
-    items{id name}
-  }
-}`
 
 const buildProduct = async (shopId, productId, data, desc) => {
   console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc}`);
@@ -63,10 +57,15 @@ const buildProduct = async (shopId, productId, data, desc) => {
       }
     };
     try{
-      Meteor.call("acc-text-import/products/setupProduct", product._id, {title: data.title,
-                                                                         variantId: variant._id,
-                                                                         code: productId,
-                                                                         vendor: data.author}, description());
+      Meteor.call("acc-text-import/products/setupProduct",
+                  product._id,
+                  shopId,
+                  {title: data.title,
+                   variantId: variant._id,
+                   code: productId,
+                   vendor: data.author,
+                   imageUrl: data.imageUrl},
+                  description());
       return true;
     }
     catch(error){
@@ -82,7 +81,7 @@ class DocumentPlanSelect extends Component {
     this.state = {documentPlans: []};
     const graphQLClient = new GraphQLClient(this.accTextGQ);
 
-    graphQLClient.request(dpQuery)
+    graphQLClient.request(DocumentPlansQuery)
       .then(data => {
         this.state.documentPlans = data.documentPlans.items;
         if(this.state.documentPlans.length > 0){

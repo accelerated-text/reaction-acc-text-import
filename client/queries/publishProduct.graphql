@@ -1,6 +1,0 @@
-mutation publishProduct($productId: ID!){
-  publishProductsToCatalog(productIds: [$productId]){
-    _id
-    product{_id}
-  }
-}
