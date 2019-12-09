@@ -24,6 +24,7 @@ Meteor.methods({
     "acc-text-import/products/setupProduct"(_id, data, desc) {
         check(_id, String);
         check(data, {
+            code: String,
             title: String,
             variantId: String
         });
@@ -34,6 +35,7 @@ Meteor.methods({
         Meteor.call("products/updateProductField", decodedId, "title", data.title);
         Meteor.call("products/updateProductField", decodedId, "isVisible", "true");
         Meteor.call("products/updateProductField", decodedId, "description", desc);
+        Meteor.call("products/updateProductField", decodedId, "barcode", code);
         Meteor.call("products/updateProductField", decodedVariantId, "isVisible", "true");
         Meteor.call("products/updateProductField", decodedVariantId, "attributeLabel", "Base");
         Meteor.call("products/updateProductField", decodedVariantId, "title", "Base");

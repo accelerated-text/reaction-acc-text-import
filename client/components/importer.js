@@ -63,7 +63,9 @@ const buildProduct = async (shopId, productId, data, desc) => {
       }
     };
     try{
-      Meteor.call("acc-text-import/products/setupProduct", product._id, {title: data.title, variantId: variant._id}, description());
+      Meteor.call("acc-text-import/products/setupProduct", product._id, {title: data.title,
+                                                                         variantId: variant._id,
+                                                                         code: productId}, description());
       return true;
     }
     catch(error){
