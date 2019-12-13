@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
-import { Reaction } from "/client/api";
+import { Reaction, i18next } from "/client/api";
 import { compose } from "recompose";
 
 import { registerComponent, Components } from "/imports/plugins/core/components/lib/components";
@@ -64,7 +64,7 @@ const buildProduct = async (shopId, productId, data, desc) => {
                    variantId: variant._id,
                    code: productId,
                    vendor: data.author,
-                   imageUrl: data.imageUrl},
+                   imageUrl: data.imageUrl || ""},
                   description());
       return true;
     }
@@ -137,6 +137,7 @@ class Importer extends Component {
     console.log(`Reading data from ${resultId}`);
     fetch(`${this.accTextUrl}/${resultId}?format=raw`, {method: "get"})
       .then(response => response.json())
+      .catch(err => this.setState({rowsError: this.state.rowsError + 1}))
       .then(body => {
             if(body.ready){
               Object.entries(body.variants).forEach(([k, v]) => {
@@ -195,29 +196,29 @@ class Importer extends Component {
   
   render(){
     return (<div>
-            <h1>Accelerated Text Import</h1>
+            <h1>{i18next.t("admin.settings.accImportLabel")}</h1>
             <div>
             <ReactFileReader handleFiles={this.handleFiles}>
-              <button className='btn'>Upload Product CSV</button>
+            <button className='btn'>{i18next.t("admin.settings.uploadCSV")}</button>
             </ReactFileReader>
             </div>
-            <span>Rows loaded: {this.state.rowCount}</span>
+            <span>{i18next.t("admin.settings.rowsLoaded")}: {this.state.rowCount}</span>
             <form onSubmit={this.handleSubmit}>
             <div>
-              <label>Description Type</label>
+              <label>{i18next.t("admin.settings.descriptionType")}</label>
               <DocumentPlanSelect
                 onSelect={this.handleChange}/>
             </div>
             <div>
-              <button disabled={this.state.rowCount == 0}>Import products</button>
+            <button disabled={this.state.rowCount == 0}>{i18next.t("admin.settings.importProducts")}</button>
             </div>
             </form>
             <div>
-              <span>{this.state.rowsSuccess} imported</span>
+              <span>{this.state.rowsSuccess} {i18next.t("admin.settings.productsImported")}</span>
               / 
-              <span>{this.state.rowsError} failed</span>
+              <span>{this.state.rowsError} {i18next.t("admin.settings.productsFailed")}</span>
               / 
-              <span>{this.state.rowCount} total</span>
+              <span>{this.state.rowCount} {i18next.t("admin.settings.productsTotal")}</span>
             </div>
             </div>);
   }

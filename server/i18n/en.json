@@ -1,10 +1,23 @@
 [{
+  "language": "English",
   "i18n": "en",
   "ns": "acc-text-import",
   "translation": {
     "acc-text-import": {
       "admin": {
-          "accImportLabel": "Accelerated Text Import Tool"
+          "navigation": {
+            "accTextImportLabel": "Accelerated Text Import Tool"
+          },
+          "settings": {
+              "accImportLabel": "Accelerated Text Import",
+              "importProducts": "Import products",
+              "uploadCSV": "Upload Product CSV",
+              "rowsLoaded": "Rows loaded",
+              "productsImported": "imported",
+              "productsFailed": "failed",
+              "productsTotal": "total",
+              "descriptionType": "Description Type"
+          }
       }
     }
   }

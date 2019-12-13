@@ -1,4 +1,4 @@
-import { Products } from "/lib/collections";
+import MediaRecords from "/lib/collections";
 import collections from "/imports/collections/rawCollections";
 import Logger from "@reactioncommerce/logger";
 import Reaction from "/imports/plugins/core/core/server/Reaction";
@@ -9,12 +9,16 @@ import publishProductToCatalogById from "/imports/node-app/core-services/catalog
 import getGraphQLContextInMeteorMethod from "/imports/plugins/core/graphql/server/getGraphQLContextInMeteorMethod";
 import createHandle from "/imports/plugins/core/catalog/server/methods/catalog";
 import decodeOpaqueId from "/imports/utils/decodeOpaqueId.js";
-import { FileRecord } from "@reactioncommerce/file-collections";
+import { AbsoluteUrlMixin } from "/imports/plugins/core/core/server/Reaction/absoluteUrl";
 import "./i18n";
 import fetch from "node-fetch";
+import { Blob, BUFFER, ExFileRecord } from "./utils";
 
-import { createMediaRecord } from "/imports/node-app/core-services/files/mutations/createMediaRecord"
+import createMediaRecord from "/imports/node-app/core-services/files/mutations/createMediaRecord.js"
 import { MediaRecord } from "/imports/node-app/core-services/files/simpleSchemas.js"
+import appEvents from "/imports/node-app/core/util/appEvents";
+
+global.Blob = Blob
 
 function getContext() {
     const context = {
@@ -37,6 +41,8 @@ Meteor.methods({
             imageUrl: String
         });
         check(desc, String);
+
+        Logger.info(`Setuping Product: ${_id}`);
         const { id: decodedId } = decodeOpaqueId(_id);
         const { id: decodedVariantId } = decodeOpaqueId(data.variantId);
         const { id: decodedShopId } = decodeOpaqueId(shopId);
@@ -50,34 +56,74 @@ Meteor.methods({
         Meteor.call("products/updateProductField", decodedVariantId, "attributeLabel", "Base");
         Meteor.call("products/updateProductField", decodedVariantId, "title", "Base");
 
+        // Ignore ImageUrl stuff for now
         if(data.imageUrl){
-          const syncFromUrl = Meteor.wrapAsync(FileRecord.fromUrl);
-          const fileRecord = syncFromUrl(data.imageUrl, {fetch: fetch});
-          fileRecord.upload({});
-          const mediaRecord = {
-            metadata: {
-              productId: decodedId,
-              variantId: decodedVariantId
-            },
-            original: fileRecord.document.original,
+          const fileRecord = Promise.await(fetch(data.imageUrl)
+                                           .then(resp => {
+                                             const buffer = Promise.await(resp.buffer());
+                                             let ct = resp.headers && resp.headers.get('content-type') || '';
+	                                     return Object.assign(
+	        	                       // Prevent copying
+	        	                       new Blob([], {
+	        		                 type: ct.toLowerCase()
+	        	                       }),
+	        	                       {
+	        		                 [BUFFER]: buffer,
+                                                 name: `${data.title}-image`
+	        	                       })
+                                           })
+                                           .then(blob => {
+                                             const { name, size, type } = blob;
+                                             Logger.debug(blob);
+                                             return blob;
+                                           })
+                                           .then(blob => ExFileRecord.fromBlob(blob, { collection: collections.MediaRecord })));
+
+          Logger.info("File downloaded");
+
+          const { account, user } = Promise.await(getGraphQLContextInMeteorMethod(Meteor.userId()));
+
+          fileRecord.metadata = {
             shopId: decodedShopId,
+            productId: decodedId,
+            variantId: decodedVariantId,
+            priority: 20
           };
+
+          const uploadResult = Promise.await(fileRecord.upload({
+            chunkSize: 5 * 1024 * 1024,
+            endpoint: AbsoluteUrlMixin.absoluteUrl("/assets/uploads")
+          }));
+          Logger.debug(`Upload result: ${uploadResult}`)
 
           const context = {
-            ...Promise.await(getGraphQLContextInMeteorMethod(Meteor.userId())),
-            collections: { MediaRecords }
-          };
-          const input = {
-            mediaRecord: mediaRecord,
-            shopId: decodedShopId,
+            accountId: account._id,
+            userId: user._id,
+            userHasPermission: (_, shopId) => true,
+            appEvents,
+            collections
           };
 
-          const syncCreate = Meteor.wrapAsync(createMediaRecord);
-          const result = syncCreate(context, input);
+          Logger.info(`Document: ${fileRecord.document}`)
+
+          const input = {
+            mediaRecord: fileRecord.document,
+            shopId: decodedShopId
+          };
+
+          Logger.info("Creating media");
+
+          const result = Promise.await(createMediaRecord(context, input));
           Logger.info(`Media creation result: ${result}`);
+
+          Logger.info("Waiting for server to build copies...");
+          Promise.await(new Promise(resolve => setTimeout(resolve, 1000)));
+        }
+        else {
+          Logger.info("No `imageUrl` is given");
         }
 
-        publishProductToCatalogById([decodedId], getContext());
+        Promise.await(publishProductToCatalogById([decodedId], getContext()));
 
         return true;
    }

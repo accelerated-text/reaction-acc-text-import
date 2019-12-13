@@ -10,3 +10,4 @@ Integration plugin between Reactive Commerce and Accelerated text
 # Quick Start
 
 clone it into `<reaction root>/import/plugins/custom`
+

@@ -6,9 +6,10 @@ import Importer from "./components/importer";
 
 registerOperatorRoute({
     isNavigationLink: true,
-    isSetting: false,
+    isSetting: true,
     path: "/acc-text-import",
     mainComponent: Importer,
+    priority: 20,
     SidebarIconComponent: (props) => <FontAwesomeIcon icon={faFont} {...props} />,
-    sidebarI18nLabel: "acc-text-import.admin.accTextImportLabel"
+    sidebarI18nLabel: "admin.navigation.accTextImportLabel"
 });
