@@ -140,7 +140,7 @@ Meteor.methods({
             Promise.await(fetchImage(dedocedId, decodedVariantId, decodedShopId, data.imageUrl));
           }
           catch(e){
-            Logger.error(`Failed to fetch image for ${decodedId}`);
+            Logger.error(`Failed to fetch image for ${decodedId}. Reason: ${e}`);
           }
         }
         else {
