@@ -53,7 +53,7 @@ Meteor.methods({
             imageUrl: String
         });
         check(desc, String);
-
+      
         Logger.info(`Setuping Product: ${_id}`);
         const { id: decodedId } = decodeOpaqueId(_id);
         const { id: decodedVariantId } = decodeOpaqueId(data.variantId);

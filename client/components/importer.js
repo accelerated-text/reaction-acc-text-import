@@ -61,10 +61,10 @@ const buildProduct = async (shopId, productId, data, desc) => {
       Meteor.call("acc-text-import/products/setupProduct",
                                product._id,
                                shopId,
-                               {title: data.title,
+                               {title: data.product,
                                 variantId: variant._id,
                                 code: productId,
-                                vendor: data.author,
+                                vendor: data.maker,
                                 imageUrl: data.imageUrl || ""},
                                 description(),
                                 (error, result) => {
