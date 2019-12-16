@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
+import { MeteorPromise } from 'meteor/promise';
 import { Reaction, i18next } from "/client/api";
 import { compose } from "recompose";
 
@@ -56,22 +57,23 @@ const buildProduct = async (shopId, productId, data, desc) => {
         return "";
       }
     };
-    try{
+
+    const productSetup = new Promise((resolve, reject) => {
       Meteor.call("acc-text-import/products/setupProduct",
-                  product._id,
-                  shopId,
-                  {title: data.title,
-                   variantId: variant._id,
-                   code: productId,
-                   vendor: data.author,
-                   imageUrl: data.imageUrl || ""},
-                  description());
-      return true;
-    }
-    catch(error){
-      console.error(error);
-      return false;
-    }
+                               product._id,
+                               shopId,
+                               {title: data.title,
+                                variantId: variant._id,
+                                code: productId,
+                                vendor: data.author,
+                                imageUrl: data.imageUrl || ""},
+                                description(),
+                                (error, result) => {
+                                  if (error) reject(error);
+                                  resolve(result);
+                                })
+    });
+    return await productSetup;
 };
 
 class DocumentPlanSelect extends Component {
