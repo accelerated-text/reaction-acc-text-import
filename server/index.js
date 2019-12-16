@@ -41,7 +41,7 @@ function isMediaLoaded(productId) {
   return media.url({ store: "image" }) != null
 }
 
-async function fetchImage(productId, variantId, shopId, imageUrl){
+async function fetchImage(productId, variantId, shopId, productName, imageUrl){
   const fileRecord = await fetch(imageUrl)
                            .then(resp => {
                              const buffer = Promise.await(resp.buffer());
@@ -53,7 +53,7 @@ async function fetchImage(productId, variantId, shopId, imageUrl){
 	        	       }),
 	        	       {
 	        		 [BUFFER]: buffer,
-                                 name: `${data.title}-image`
+                                 name: `${productName}-image`
 	        	       })
                            })
                            .then(blob => {
@@ -137,7 +137,7 @@ Meteor.methods({
         // Ignore ImageUrl stuff for now
         if(data.imageUrl){
           try{
-            Promise.await(fetchImage(decodedId, decodedVariantId, decodedShopId, data.imageUrl));
+            Promise.await(fetchImage(decodedId, decodedVariantId, decodedShopId, data.title, data.imageUrl));
           }
           catch(e){
             Logger.error(`Failed to fetch image for ${decodedId}. Reason: ${e}`);
