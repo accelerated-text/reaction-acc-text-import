@@ -41,6 +41,72 @@ function isMediaLoaded(productId) {
   return media.url({ store: "image" }) != null
 }
 
+async function fetchImage(productId, variantId, shopId, imageUrl){
+  const fileRecord = await fetch(imageUrl)
+                           .then(resp => {
+                             const buffer = Promise.await(resp.buffer());
+                             let ct = resp.headers && resp.headers.get('content-type') || '';
+	                     return Object.assign(
+	        	       // Prevent copying
+	        	       new Blob([], {
+	        		 type: ct.toLowerCase()
+	        	       }),
+	        	       {
+	        		 [BUFFER]: buffer,
+                                 name: `${data.title}-image`
+	        	       })
+                           })
+                           .then(blob => {
+                             const { name, size, type } = blob;
+                             Logger.debug(blob);
+                             return blob;
+                           })
+                           .then(blob => ExFileRecord.fromBlob(blob, { collection: collections.MediaRecord }));
+
+          Logger.info("File downloaded");
+
+          const { account, user } = await getGraphQLContextInMeteorMethod(Meteor.userId());
+
+          fileRecord.metadata = {
+            shopId: shopId,
+            productId: productId,
+            variantId: variantId,
+            priority: 20
+          };
+
+          const uploadResult = await fileRecord.upload({
+            chunkSize: 5 * 1024 * 1024,
+            endpoint: AbsoluteUrlMixin.absoluteUrl("/assets/uploads")
+          });
+          Logger.debug(`Upload result: ${uploadResult}`)
+
+          const context = {
+            accountId: account._id,
+            userId: user._id,
+            userHasPermission: (_, shopId) => true,
+            appEvents,
+            collections
+          };
+
+          Logger.info(`Document: ${fileRecord.document}`)
+
+          const input = {
+            mediaRecord: fileRecord.document,
+            shopId: shopId
+          };
+
+          Logger.info("Creating media");
+
+          const result = await createMediaRecord(context, input);
+          Logger.info(`Media creation result: ${result}`);
+
+          Logger.info("Waiting for server to build copies...");
+          while(!isMediaLoaded(productId)){
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+          Logger.info("Done. Media is prepared");
+}
+
 Meteor.methods({
     "acc-text-import/products/setupProduct"(_id, shopId, data, desc) {
         check(_id, String);
@@ -70,69 +136,12 @@ Meteor.methods({
 
         // Ignore ImageUrl stuff for now
         if(data.imageUrl){
-          const fileRecord = Promise.await(fetch(data.imageUrl)
-                                           .then(resp => {
-                                             const buffer = Promise.await(resp.buffer());
-                                             let ct = resp.headers && resp.headers.get('content-type') || '';
-	                                     return Object.assign(
-	        	                       // Prevent copying
-	        	                       new Blob([], {
-	        		                 type: ct.toLowerCase()
-	        	                       }),
-	        	                       {
-	        		                 [BUFFER]: buffer,
-                                                 name: `${data.title}-image`
-	        	                       })
-                                           })
-                                           .then(blob => {
-                                             const { name, size, type } = blob;
-                                             Logger.debug(blob);
-                                             return blob;
-                                           })
-                                           .then(blob => ExFileRecord.fromBlob(blob, { collection: collections.MediaRecord })));
-
-          Logger.info("File downloaded");
-
-          const { account, user } = Promise.await(getGraphQLContextInMeteorMethod(Meteor.userId()));
-
-          fileRecord.metadata = {
-            shopId: decodedShopId,
-            productId: decodedId,
-            variantId: decodedVariantId,
-            priority: 20
-          };
-
-          const uploadResult = Promise.await(fileRecord.upload({
-            chunkSize: 5 * 1024 * 1024,
-            endpoint: AbsoluteUrlMixin.absoluteUrl("/assets/uploads")
-          }));
-          Logger.debug(`Upload result: ${uploadResult}`)
-
-          const context = {
-            accountId: account._id,
-            userId: user._id,
-            userHasPermission: (_, shopId) => true,
-            appEvents,
-            collections
-          };
-
-          Logger.info(`Document: ${fileRecord.document}`)
-
-          const input = {
-            mediaRecord: fileRecord.document,
-            shopId: decodedShopId
-          };
-
-          Logger.info("Creating media");
-
-          const result = Promise.await(createMediaRecord(context, input));
-          Logger.info(`Media creation result: ${result}`);
-
-          Logger.info("Waiting for server to build copies...");
-          while(!isMediaLoaded(decodedId)){
-            Promise.await(new Promise(resolve => setTimeout(resolve, 500)));
+          try{
+            Promise.await(fetchImage(dedocedId, decodedVariantId, decodedShopId, data.imageUrl));
           }
-          Logger.info("Done. Media is prepared");
+          catch(e){
+            Logger.error(`Failed to fetch image for ${decodedId}`);
+          }
         }
         else {
           Logger.info("No `imageUrl` is given");
