@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
-import { MeteorPromise } from 'meteor/promise';
 import { Reaction, i18next } from "/client/api";
 import { compose } from "recompose";
 
