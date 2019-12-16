@@ -29,6 +29,18 @@ function getContext() {
     return context;
 }
 
+function isMediaLoaded(productId) {
+  const { Media } = collections;
+  const media = Promise.await(Media.findOne(
+    {
+      "metadata.productId": productId,
+      "metadata.workflow": { $nin: ["archived", "unpublished"] }
+    },
+  ));
+
+  return media.url({ store: "image" }) != null
+}
+
 Meteor.methods({
     "acc-text-import/products/setupProduct"(_id, shopId, data, desc) {
         check(_id, String);
@@ -117,7 +129,10 @@ Meteor.methods({
           Logger.info(`Media creation result: ${result}`);
 
           Logger.info("Waiting for server to build copies...");
-          Promise.await(new Promise(resolve => setTimeout(resolve, 1000)));
+          while(!isMediaLoaded(decodedId)){
+            Promise.await(new Promise(resolve => setTimeout(resolve, 500)));
+          }
+          Logger.info("Done. Media is prepared");
         }
         else {
           Logger.info("No `imageUrl` is given");
