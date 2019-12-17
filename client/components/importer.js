@@ -1,3 +1,4 @@
+
 import React, { Component } from "react";
 import { Meteor } from "meteor/meteor";
 import { Reaction, i18next } from "/client/api";
@@ -199,8 +200,8 @@ class Importer extends Component {
     return (<div>
             <h1>{i18next.t("admin.settings.accImportLabel")}</h1>
             <div>
-            <ReactFileReader handleFiles={this.handleFiles}>
-            <button className='btn'>{i18next.t("admin.settings.uploadCSV")}</button>
+            <ReactFileReader fileTypes={["*.csv"]} handleFiles={this.handleFiles}>
+              <button className='btn'>{i18next.t("admin.settings.uploadCSV")}</button>
             </ReactFileReader>
             </div>
             <span>{i18next.t("admin.settings.rowsLoaded")}: {this.state.rowCount}</span>
