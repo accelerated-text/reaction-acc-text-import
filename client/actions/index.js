@@ -5,19 +5,19 @@ import CreateProductVariantMutation from "../queries/createVariant.graphql";
 import DocumentPlansQuery from "../queries/documentPlans.graphql";
 import { GraphQLClient } from "graphql-request";
 
-export getDocumentPlans = () => {
-  const accTextGQ = "http://localhost:3001/_graphql";
-  const graphQLClient = new GraphQLClient(accTextGQ);
+export const getDocumentPlans = (options = {acctextGraphQLURL: "http://localhost:3001/_graphql"}) => {
+  const { accTextGraphQLURL } = options;
+  const graphQLClient = new GraphQLClient(accTextGraphQLURL);
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
 }
 
-export buildProduct = async (shopId, productId, data, desc) => {
+export const buildProduct = async (shopId, productId, data, desc, options = {graphQLURL: "http://localhost:3000/graphql-beta"}) => {
   console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc}`);
   const title = data.title;
-  const endpoint = "http://localhost:3000/graphql-beta";
+  const { graphQLURL } = options;
   const meteorAuth = localStorage.getItem("Meteor.loginToken");
 
-  const graphQLClient = new GraphQLClient(endpoint, {
+  const graphQLClient = new GraphQLClient(graphQLURL, {
     headers: {
       "meteor-login-token": meteorAuth
     }
