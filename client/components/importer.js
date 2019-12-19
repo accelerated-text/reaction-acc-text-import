@@ -1,6 +1,4 @@
-
 import React, { Component } from "react";
-import { Meteor } from "meteor/meteor";
 import { Reaction, i18next } from "/client/api";
 import { compose } from "recompose";
 
@@ -10,82 +8,23 @@ import { withApollo } from "react-apollo";
 import { withRouter } from "react-router";
 import withOpaqueShopId from "/imports/plugins/core/graphql/lib/hocs/withOpaqueShopId";
 
-import getOpaqueIds from "/imports/plugins/core/core/client/util/getOpaqueIds";
 
 import PropTypes from "prop-types";
-
-import CreateProductMutation from "../queries/createProduct.graphql";
-import CreateProductVariantMutation from "../queries/createVariant.graphql";
-import DocumentPlansQuery from "../queries/documentPlans.graphql";
 
 
 import ReactFileReader from "react-file-reader";
 import Papa from "papaparse";
-import { GraphQLClient } from "graphql-request";
 
-
-const buildProduct = async (shopId, productId, data, desc) => {
-  console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc}`);
-  const title = data.title;
-  const endpoint = "http://localhost:3000/graphql-beta";
-  const meteorAuth = localStorage.getItem("Meteor.loginToken");
-
-  const graphQLClient = new GraphQLClient(endpoint, {
-    headers: {
-      "meteor-login-token": meteorAuth
-    }
-  });
-
-  const createProduct = async (input) => {
-    const variables = { input };
-    return graphQLClient.request(CreateProductMutation, variables);
-  };
-
-  const createVariant = async (input) => {
-    const variables = { input };
-    return graphQLClient.request(CreateProductVariantMutation, variables);
-  };
-
-    const product = await createProduct({shopId: shopId}).then(resp => resp.createProduct.product);
-    const variant = await createVariant({productId: product._id, shopId: shopId}).then(resp => resp.createProductVariant.variant);
-    console.log(`Setuping ProductId: ${product._id}, variantId: ${variant._id}`);
-    const description = () => {
-      if(desc.length > 0){
-        return _.shuffle(desc)[0];
-      }
-      else{
-        return "";
-      }
-    };
-
-    const productSetup = new Promise((resolve, reject) => {
-      Meteor.call("acc-text-import/products/setupProduct",
-                               product._id,
-                               shopId,
-                               {title: data.product,
-                                variantId: variant._id,
-                                code: productId,
-                                vendor: data.maker,
-                                imageUrl: data.imageUrl || ""},
-                                description(),
-                                (error, result) => {
-                                  if (error) reject(error);
-                                  resolve(result);
-                                })
-    });
-    return await productSetup;
-};
+import { buildProduct, getDocumentPlans } from "../actions";
 
 class DocumentPlanSelect extends Component {
   constructor(props){
     super(props);
-    this.accTextGQ = "http://localhost:3001/_graphql";
     this.state = {documentPlans: []};
-    const graphQLClient = new GraphQLClient(this.accTextGQ);
 
-    graphQLClient.request(DocumentPlansQuery)
-      .then(data => {
-        this.state.documentPlans = data.documentPlans.items;
+    getDocumentPlans()
+      .then(documentPlans => {
+        this.state.documentPlans = documentPlans;
         if(this.state.documentPlans.length > 0){
           this.props.onSelect({target: {name: "documentPlanId", value: this.state.documentPlans[0].id}});
         }
