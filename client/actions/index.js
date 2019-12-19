@@ -5,7 +5,7 @@ import CreateProductVariantMutation from "../queries/createVariant.graphql";
 import DocumentPlansQuery from "../queries/documentPlans.graphql";
 import { GraphQLClient } from "graphql-request";
 
-export const getDocumentPlans = (options = {acctextGraphQLURL: "http://localhost:3001/_graphql"}) => {
+export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost:3001/_graphql"}) => {
   const { accTextGraphQLURL } = options;
   const graphQLClient = new GraphQLClient(accTextGraphQLURL);
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
