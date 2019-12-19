@@ -15,7 +15,7 @@ import PropTypes from "prop-types";
 import ReactFileReader from "react-file-reader";
 import Papa from "papaparse";
 
-import { buildProduct, getDocumentPlans } from "../actions";
+import { buildProduct, getDocumentPlans, generateDescriptions } from "../actions";
 
 class DocumentPlanSelect extends Component {
   constructor(props){
@@ -64,7 +64,6 @@ class Importer extends Component {
   constructor(props) {
     super(props);
     this.state = {documentPlanId: null, data: {}, rowCount: 0, rowsSuccess: 0, rowsError: 0, documentPlans: []};
-    this.accTextUrl = "http://localhost:3001/nlg";
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
@@ -72,35 +71,6 @@ class Importer extends Component {
   handleChange = e => {
     this.setState({ [e.target.name]: e.target.value });
     return this.state;
-  };
-
-  readResult = resultId => {
-    console.log(`Reading data from ${resultId}`);
-    fetch(`${this.accTextUrl}/${resultId}?format=raw`, {method: "get"})
-      .then(response => response.json())
-      .catch(err => this.setState({rowsError: this.state.rowsError + 1}))
-      .then(body => {
-            if(body.ready){
-              Object.entries(body.variants).forEach(([k, v]) => {
-                buildProduct(this.props.shopId, k, this.state.dataRows[k], v)
-                  .then(result => {
-                    if(result){
-                      this.setState({rowsSuccess: this.state.rowsSuccess + 1});
-                    }
-                    else{
-                      this.setState({rowsError: this.state.rowsError + 1});
-                    }
-                  });
-              });
-            }
-            else{
-              console.log("NLG result is not ready yet. Retry after second")
-              setTimeout(() => {
-                this.readResult(resultId);
-              }, 1000);
-            }
-      });
-    
   };
 
   handleFiles = files => {
@@ -122,17 +92,20 @@ class Importer extends Component {
     }, {});
 
     this.state.dataRows = dataRows;
-    const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {} };
-    this.setState({rowsSuccess: 0, rowsError: 0});
-    const conf = {
-      method: "post",
-      body: JSON.stringify(request),
-      headers: new Headers({ "Content-Type": "application/json",})
-    };
-    
-    fetch(`${this.accTextUrl}/_bulk/`, conf)
-       .then(response => response.json())
-       .then(result => this.readResult(result.resultId));
+    generateDescriptions(documentPlanId, dataRows)
+      .then(variants => {
+        Object.entries(variants).forEach(([k, v]) => {
+          buildProduct(this.props.shopId, k, this.state.dataRows[k], v)
+            .then(result => {
+              if(result){
+                this.setState({rowsSuccess: this.state.rowsSuccess + 1});
+              }
+              else{
+                this.setState({rowsError: this.state.rowsError + 1});
+              }
+            });
+        })
+      });
   };
   
   render(){

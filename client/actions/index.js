@@ -5,6 +5,34 @@ import CreateProductVariantMutation from "../queries/createVariant.graphql";
 import DocumentPlansQuery from "../queries/documentPlans.graphql";
 import { GraphQLClient } from "graphql-request";
 
+const readResult = async (resultId, options) => {
+  const {accTextURL} = options;
+  console.log(`Reading data from ${resultId}`);
+
+  while(true){
+    result = await fetch(`${accTextURL}/${resultId}?format=raw`, {method: "get"})
+      .then(response => response.json())
+    if(result.ready){
+      return result.variants;
+    }
+    console.log("NLG result is not ready yet. Retry after second");
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+}
+
+export const generateDescriptions = async (documentPlanId, dataRows, options = {accTextURL: "http://localhost:3001/nlg"}) => {
+  const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {} };
+  const {accTextURL} = options;
+  const conf = {
+      method: "post",
+      body: JSON.stringify(request),
+      headers: new Headers({ "Content-Type": "application/json",})
+  };
+
+  const result = await fetch(`${accTextURL}/_bulk/`, conf).then(response => response.json());
+  return await readResult(result.resultId, options);
+}
+
 export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost:3001/_graphql"}) => {
   const { accTextGraphQLURL } = options;
   const graphQLClient = new GraphQLClient(accTextGraphQLURL);
