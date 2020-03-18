@@ -3,6 +3,7 @@ import { faFont } from "@fortawesome/free-solid-svg-icons";
 import React from "react";
 import { registerOperatorRoute } from "../../../../client/ui";
 import Importer from "./components/importer";
+import { i18next } from "/client/api";
 
 registerOperatorRoute({
     isNavigationLink: true,

@@ -21,7 +21,7 @@ const readResult = async (resultId, options) => {
 }
 
 export const generateDescriptions = async (documentPlanId, dataRows, options = {accTextURL: "http://localhost:3001/nlg"}) => {
-  const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {} };
+  const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {English: true} };
   const {accTextURL} = options;
   const conf = {
       method: "post",
@@ -39,8 +39,8 @@ export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
 }
 
-export const buildProduct = async (shopId, productId, data, desc, options = {graphQLURL: "http://localhost:3000/graphql-beta"}) => {
-  console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc}`);
+export const buildProduct = async (shopId, productId, data, desc, options = {graphQLURL: "http://localhost:3000/graphql"}) => {
+  console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc[0].original}`);
   const title = data.title;
   const { graphQLURL } = options;
   const meteorAuth = localStorage.getItem("Meteor.loginToken");
@@ -66,7 +66,7 @@ export const buildProduct = async (shopId, productId, data, desc, options = {gra
     console.log(`Setuping ProductId: ${product._id}, variantId: ${variant._id}`);
     const description = () => {
       if(desc.length > 0){
-        return _.shuffle(desc)[0];
+        return _.shuffle(desc)[0].original;
       }
       else{
         return "";
