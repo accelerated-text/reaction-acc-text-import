@@ -12,9 +12,6 @@ import createMediaRecordMutation from "../queries/createMediaRecord";
 
 import { useApolloClient, useMutation } from "@apollo/react-hooks";
 
-import { FileRecord } from "@reactioncommerce/file-collections";
-
-
 export function withMutations(Component){
     return function WrappedComponent(props) {
         const [createProduct, { error: createProductError }] = useMutation(createProductMutation);
@@ -70,34 +67,28 @@ export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
 };
 
-export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {}) => {
+export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {apiURL: "http://localhost:3000"}) => {
     console.log(`Attaching image to product ${productId}`);
+    const { apiURL } = options;
+    const uploadUrl = apiURL + "/assets/uploads";
     const { createMediaRecord } = mutations;
-    const metadata = {
-        priority: 20,
-        productId,
-        variantId
-    };
+    const imageUpload = new Promise((resolve, reject) => {
+        Meteor.call("acc-text-import/fetchMedia", shopId, productId, variantId, imageUrl, uploadUrl, (error, result) => {
+            if (error)
+                reject(error);
+            else
+                resolve(result);
+        });
+    });
 
-    const customFetch = async (url, options) => {
-        return await fetch(url, {...options, mode: "cors"});
-    };
+    await imageUpload.then(fileRecord => {
+        console.log(`MediaRecord: ${fileRecord.document}`);
 
-    const fileRecord = await FileRecord.fromUrl(imageUrl, {fetch: customFetch});
-    fileRecord.metadata = metadata;
+        return createMediaRecord({ variables: {input: {shopId, mediaRecord: fileRecord.document}}});
+    });
 
-    await fileRecord.upload();
 
-    const mediaRecordInfo = {};
 
-    const mediaRecord = {
-        metadata,
-        original: mediaRecordInfo
-    };
-
-    console.log(`MediaRecord: ${fileRecord.document}`);
-
-    await createMediaRecord({ variables: {input: {shopId, mediaRecord: fileRecord.document}}});
     return true;
 };
 
@@ -164,8 +155,5 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
     await updateProduct({ variables: {input: {shopId, productId: product._id, product: productFields}}});
     console.log("Updating variant fields");
     await updateProductVariant({ variables: {input: {shopId, variantId: variant._id, variant: variantFields}}});
-
-    console.log("Done setuping");
-
     return {shopId, productId: product._id, variantId: variant._id, imageUrl: (data.imageUrl || ""), productName: data.product};
 };
