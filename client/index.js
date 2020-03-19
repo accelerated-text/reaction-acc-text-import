@@ -6,10 +6,9 @@ import Importer from "./components/importer";
 import { i18next } from "/client/api";
 
 registerOperatorRoute({
-    isNavigationLink: true,
-    isSetting: true,
+    group: ["main", "settings"],
     path: "/acc-text-import",
-    mainComponent: Importer,
+    MainComponent: Importer,
     priority: 20,
     SidebarIconComponent: (props) => <FontAwesomeIcon icon={faFont} {...props} />,
     sidebarI18nLabel: "admin.navigation.accTextImportLabel"

@@ -8,14 +8,12 @@ import { withApollo } from "react-apollo";
 import { withRouter } from "react-router";
 import withOpaqueShopId from "/imports/plugins/core/graphql/lib/hocs/withOpaqueShopId";
 
-
 import PropTypes from "prop-types";
-
 
 import ReactFileReader from "react-file-reader";
 import Papa from "papaparse";
 
-import { buildProduct, getDocumentPlans, generateDescriptions } from "../actions";
+import { buildProduct, getDocumentPlans, generateDescriptions, withMutations } from "../actions";
 
 class DocumentPlanSelect extends Component {
   constructor(props){
@@ -79,7 +77,7 @@ class Importer extends Component {
     reader.onload = e => {
       const csv = Papa.parse(reader.result, { header: true, skipEmptyLines: true, delimiter: ","});
       this.setState({ data: csv.data, rowCount: csv.data.length });
-    }
+    };
     reader.readAsText(files[0]);
   };
 
@@ -95,7 +93,12 @@ class Importer extends Component {
     generateDescriptions(documentPlanId, dataRows)
       .then(variants => {
         Object.entries(variants).forEach(([k, v]) => {
-          buildProduct(this.props.shopId, k, this.state.dataRows[k], v)
+            buildProduct(this.props.shopId, k, this.state.dataRows[k], v, {
+                createProduct: this.props.createProduct,
+                createVariant: this.props.createVariant,
+                updateProduct: this.props.updateProduct,
+                updateProductVariant: this.props.updateProductVariant
+            })
             .then(result => {
               if(result){
                 this.setState({rowsSuccess: this.state.rowsSuccess + 1});
@@ -104,10 +107,10 @@ class Importer extends Component {
                 this.setState({rowsError: this.state.rowsError + 1});
               }
             });
-        })
+        });
       });
   };
-  
+
   render(){
     return (<div>
             <h1>{i18next.t("admin.settings.accImportLabel")}</h1>
@@ -129,9 +132,9 @@ class Importer extends Component {
             </form>
             <div>
               <span>{this.state.rowsSuccess} {i18next.t("admin.settings.productsImported")}</span>
-              / 
+              /
               <span>{this.state.rowsError} {i18next.t("admin.settings.productsFailed")}</span>
-              / 
+              /
               <span>{this.state.rowCount} {i18next.t("admin.settings.productsTotal")}</span>
             </div>
             </div>);
@@ -140,13 +143,15 @@ class Importer extends Component {
 
 
 registerComponent("Importer", Importer, [
-  withApollo,
-  withRouter,
-  withOpaqueShopId
+    withApollo,
+    withRouter,
+    withOpaqueShopId,
+    withMutations
 ]);
 
 export default compose(
-  withApollo,
-  withRouter,
-  withOpaqueShopId
+    withApollo,
+    withRouter,
+    withOpaqueShopId,
+    withMutations
 )(Importer);
