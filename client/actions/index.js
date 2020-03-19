@@ -12,6 +12,8 @@ import createMediaRecordMutation from "../queries/createMediaRecord";
 
 import { useApolloClient, useMutation } from "@apollo/react-hooks";
 
+import { FileRecord } from "@reactioncommerce/file-collections";
+
 
 export function withMutations(Component){
     return function WrappedComponent(props) {
@@ -67,12 +69,19 @@ export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost
 };
 
 export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {}) => {
+    console.log(`Attaching image to product ${productId}`);
     const { createMediaRecord } = mutations;
     const metadata = {
         priority: 20,
-        productId: product._id,
-        variantId: variant._id
+        productId,
+        variantId
     };
+
+    const fileRecord = FileRecord.fromUrl(imageUrl, {fetch});
+    fileRecord.metadata = metadata;
+
+    await fileRecord.upload();
+
     const mediaRecordInfo = {};
 
     const mediaRecord = {
@@ -80,9 +89,9 @@ export const attachImage = async(shopId, productId, variantId, imageUrl, mutatio
         original: mediaRecordInfo
     };
 
-    const clientMutationId = "";
+    console.log(`MediaRecord: ${fileRecord.document}`);
 
-    await createMediaRecord({ variables: {input: {shopId, clientMutationId, mediaRecord}}});
+    await createMediaRecord({ variables: {input: {shopId, mediaRecord: fileRecord.document}}});
     return true;
 };
 
@@ -108,7 +117,7 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
         facebookMsg: "",
         googleplusMsg: "",
         isDeleted: false,
-        isViCreateMediaRecordInputsible: true,
+        isVisible: true,
         metaDescription: "",
         metafields: [],
         originCountry: "",
@@ -131,7 +140,6 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
         weight: 0,
         width: 0,
         length: 0,
-        price: 0,
         index: 0,
         isDeleted: false,
         isVisible: true,
@@ -146,8 +154,12 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
         taxDescription: ""
     };
 
+    console.log("Updating product fields");
     await updateProduct({ variables: {input: {shopId, productId: product._id, product: productFields}}});
+    console.log("Updating variant fields");
     await updateProductVariant({ variables: {input: {shopId, variantId: variant._id, variant: variantFields}}});
 
-    return {shopId: shopId, productId: product._id, variantId: variant._id, imageUrL: data.imageUrl || "";
+    console.log("Done setuping");
+
+    return {shopId, productId: product._id, variantId: variant._id, imageUrL: (data.imageUrl || ""), productName: data.product};
 };

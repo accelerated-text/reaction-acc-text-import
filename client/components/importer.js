@@ -100,7 +100,7 @@ class Importer extends Component {
                 updateProductVariant: this.props.updateProductVariant
             })
                 .then(result => {
-                    const { shopId, productId, variantId, imageUrl } = result;
+                    const { shopId, productId, variantId, imageUrl, productName } = result;
                     if(imageUrl != ""){
                         return attachImage(shopId, productId, variantId, imageUrl, {createMediaRecord: this.props.createMediaRecord});
                     }
