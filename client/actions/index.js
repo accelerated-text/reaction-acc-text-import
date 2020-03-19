@@ -8,6 +8,8 @@ import createProductMutation from "../queries/createProduct";
 import createProductVariantMutation from "../queries/createVariant";
 import updateProductMutation from "../queries/updateProduct";
 import updateProductVariantMutation from "../queries/updateProductVariant";
+import createMediaRecordMutation from "../queries/createMediaRecord";
+
 import { useApolloClient, useMutation } from "@apollo/react-hooks";
 
 
@@ -17,12 +19,14 @@ export function withMutations(Component){
         const [createVariant, { error: createVariantError }] = useMutation(createProductVariantMutation);
         const [updateProduct, { error: updateProductError }] = useMutation(updateProductMutation);
         const [updateProductVariant, { error: updateProductVariantError }] = useMutation(updateProductVariantMutation);
+        const [createMediaRecord, { error: createMediaRecordError }] = useMutation(createMediaRecordMutation);
         return <Component
         {...props}
         createProduct={createProduct}
         createVariant={createVariant}
         updateProduct={updateProduct}
         updateProductVariant={updateProductVariant}
+        createMediaRecord={createMediaRecord}
             />;
     };
 }
@@ -62,10 +66,30 @@ export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
 };
 
+export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {}) => {
+    const { createMediaRecord } = mutations;
+    const metadata = {
+        priority: 20,
+        productId: product._id,
+        variantId: variant._id
+    };
+    const mediaRecordInfo = {};
+
+    const mediaRecord = {
+        metadata,
+        original: mediaRecordInfo
+    };
+
+    const clientMutationId = "";
+
+    await createMediaRecord({ variables: {input: {shopId, clientMutationId, mediaRecord}}});
+    return true;
+};
+
 export const buildProduct = async (shopId, productId, data, desc, mutations, options = {}) => {
     console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc[0].original}`);
     const title = data.title;
-    const { createProduct, createVariant, updateProduct, updateProductVariant } = mutations;
+    const { createProduct, createVariant, updateProduct, updateProductVariant, createMediaRecord } = mutations;
 
     const product = await createProduct({ variables: {input: { shopId }}}).then(r => r.data.createProduct).then(resp => resp.product);
     const variant = await createVariant({ variables: {input: {productId: product._id, shopId}}}).then(r => r.data.createProductVariant).then(resp => resp.variant);
@@ -84,7 +108,7 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
         facebookMsg: "",
         googleplusMsg: "",
         isDeleted: false,
-        isVisible: true,
+        isViCreateMediaRecordInputsible: true,
         metaDescription: "",
         metafields: [],
         originCountry: "",
@@ -125,12 +149,5 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
     await updateProduct({ variables: {input: {shopId, productId: product._id, product: productFields}}});
     await updateProductVariant({ variables: {input: {shopId, variantId: variant._id, variant: variantFields}}});
 
-    // const productSetup = new Promise((resolve, reject) => {
-    //   Meteor.call("acc-text-import/products/setupProduct", product._id,
-    //   shopId, {title: data.product, variantId: variant._id, code: productId,
-    //   vendor: data.maker, imageUrl: data.imageUrl || ""}, description(),
-    //   (error, result) => { if (error) reject(error); resolve(result); }); });
-    //   return await productSetup;
-
-    return true;
+    return {shopId: shopId, productId: product._id, variantId: variant._id, imageUrL: data.imageUrl || "";
 };

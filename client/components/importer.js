@@ -13,7 +13,7 @@ import PropTypes from "prop-types";
 import ReactFileReader from "react-file-reader";
 import Papa from "papaparse";
 
-import { buildProduct, getDocumentPlans, generateDescriptions, withMutations } from "../actions";
+import { buildProduct, getDocumentPlans, generateDescriptions, withMutations, attachImage } from "../actions";
 
 class DocumentPlanSelect extends Component {
   constructor(props){
@@ -99,14 +99,23 @@ class Importer extends Component {
                 updateProduct: this.props.updateProduct,
                 updateProductVariant: this.props.updateProductVariant
             })
-            .then(result => {
-              if(result){
-                this.setState({rowsSuccess: this.state.rowsSuccess + 1});
-              }
-              else{
-                this.setState({rowsError: this.state.rowsError + 1});
-              }
-            });
+                .then(result => {
+                    const { shopId, productId, variantId, imageUrl } = result;
+                    if(imageUrl != ""){
+                        return attachImage(shopId, productId, variantId, imageUrl, {createMediaRecord: this.props.createMediaRecord});
+                    }
+                    else {
+                        return true;
+                    }
+                })
+                .then(result => {
+                    if(result){
+                        this.setState({rowsSuccess: this.state.rowsSuccess + 1});
+                    }
+                    else{
+                        this.setState({rowsError: this.state.rowsError + 1});
+                    }
+                });
         });
       });
   };
