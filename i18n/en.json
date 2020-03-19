@@ -16,7 +16,8 @@
               "productsImported": "imported",
               "productsFailed": "failed",
               "productsTotal": "total",
-              "descriptionType": "Description Type"
+              "descriptionType": "Description Type",
+              "language": "Language"
           }
       }
     }

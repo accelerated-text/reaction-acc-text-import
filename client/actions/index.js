@@ -49,17 +49,19 @@ const readResult = async (resultId, options) => {
   }
 };
 
-export const generateDescriptions = async (documentPlanId, dataRows, options = {accTextURL: "http://localhost:3001/nlg"}) => {
-  const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues: {English: true} };
-  const {accTextURL} = options;
-  const conf = {
-      method: "post",
-      body: JSON.stringify(request),
-      headers: new Headers({ "Content-Type": "application/json",})
-  };
+export const generateDescriptions = async (documentPlanId, dataRows, lang, options = {accTextURL: "http://localhost:3001/nlg"}) => {
+    let readerFlagValues = {};
+    readerFlagValues[lang] = true;
+    const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues };
+    const {accTextURL} = options;
+    const conf = {
+        method: "post",
+        body: JSON.stringify(request),
+        headers: new Headers({ "Content-Type": "application/json",})
+    };
 
-  const result = await fetch(`${accTextURL}/_bulk/`, conf).then(response => response.json());
-  return await readResult(result.resultId, options);
+    const result = await fetch(`${accTextURL}/_bulk/`, conf).then(response => response.json());
+    return await readResult(result.resultId, options);
 };
 
 export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost:3001/_graphql"}) => {
@@ -77,7 +79,11 @@ export const attachImage = async(shopId, productId, variantId, imageUrl, mutatio
         variantId
     };
 
-    const fileRecord = FileRecord.fromUrl(imageUrl, {fetch});
+    const customFetch = async (url, options) => {
+        return await fetch(url, {...options, mode: "cors"});
+    };
+
+    const fileRecord = await FileRecord.fromUrl(imageUrl, {fetch: customFetch});
     fileRecord.metadata = metadata;
 
     await fileRecord.upload();
@@ -161,5 +167,5 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
 
     console.log("Done setuping");
 
-    return {shopId, productId: product._id, variantId: variant._id, imageUrL: (data.imageUrl || ""), productName: data.product};
+    return {shopId, productId: product._id, variantId: variant._id, imageUrl: (data.imageUrl || ""), productName: data.product};
 };
