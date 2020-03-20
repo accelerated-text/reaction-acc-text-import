@@ -6,7 +6,7 @@ import Importer from "./components/importer";
 import { i18next } from "/client/api";
 
 registerOperatorRoute({
-    group: ["main", "settings"],
+    group: "settings",
     path: "/acc-text-import",
     MainComponent: Importer,
     priority: 20,

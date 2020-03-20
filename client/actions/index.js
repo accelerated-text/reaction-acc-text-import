@@ -9,8 +9,9 @@ import createProductVariantMutation from "../queries/createVariant";
 import updateProductMutation from "../queries/updateProduct";
 import updateProductVariantMutation from "../queries/updateProductVariant";
 import createMediaRecordMutation from "../queries/createMediaRecord";
+import findProductQuery from "../queries/findProduct";
 
-import { useApolloClient, useMutation } from "@apollo/react-hooks";
+import { useApolloClient, useMutation, useLazyQuery } from "@apollo/react-hooks";
 
 export function withMutations(Component){
     return function WrappedComponent(props) {
@@ -19,6 +20,13 @@ export function withMutations(Component){
         const [updateProduct, { error: updateProductError }] = useMutation(updateProductMutation);
         const [updateProductVariant, { error: updateProductVariantError }] = useMutation(updateProductVariantMutation);
         const [createMediaRecord, { error: createMediaRecordError }] = useMutation(createMediaRecordMutation);
+
+        const apollo = useApolloClient();
+
+        const findProduct = async (input) => {
+            const { data, error } =  await apollo.query({...input, query: findProductQuery});
+            return data;
+        };
         return <Component
         {...props}
         createProduct={createProduct}
@@ -26,6 +34,7 @@ export function withMutations(Component){
         updateProduct={updateProduct}
         updateProductVariant={updateProductVariant}
         createMediaRecord={createMediaRecord}
+        findProduct={findProduct}
             />;
     };
 }
@@ -67,7 +76,7 @@ export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
 };
 
-export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {}) => {
+export const attachImage = async (shopId, productId, variantId, imageUrl, mutations, options = {}) => {
     console.log(`Attaching image to product ${productId}`);
     const { createMediaRecord } = mutations;
     const imageUpload = new Promise((resolve, reject) => {
@@ -90,13 +99,27 @@ export const attachImage = async(shopId, productId, variantId, imageUrl, mutatio
     return true;
 };
 
-export const buildProduct = async (shopId, productId, data, desc, mutations, options = {}) => {
-    console.log(`Building product: ${productId}, with data: ${data}, having descriptions: ${desc[0].original}`);
-    const title = data.title;
-    const { createProduct, createVariant, updateProduct, updateProductVariant, createMediaRecord } = mutations;
+export const buildProduct = async (shopId, data, desc, mutations, options = {}) => {
+    console.log(`Building product  with data: ${JSON.stringify(data)}, having descriptions: ${desc[0].original}`);
 
-    const product = await createProduct({ variables: {input: { shopId }}}).then(r => r.data.createProduct).then(resp => resp.product);
-    const variant = await createVariant({ variables: {input: {productId: product._id, shopId}}}).then(r => r.data.createProductVariant).then(resp => resp.variant);
+    const title = data.title;
+    const { createProduct, createVariant, updateProduct, updateProductVariant, createMediaRecord, findProduct } = mutations;
+    const results = await findProduct({ variables: {code: data.productId, shopId}});
+    const matchingProducts = results.products.nodes;
+    const getProduct = async () => {
+        if(matchingProducts.length > 0){
+            console.log("Updating existing product");
+            return matchingProducts[0];
+        }
+        else {
+            return await createProduct({ variables: {input: { shopId }}}).then(r => r.data.createProduct).then(resp => resp.product);
+        }
+    };
+
+    const product = await getProduct();
+
+    //const variant = await createVariant({ variables: {input: {productId: product._id, shopId}}}).then(r => r.data.createProductVariant).then(resp => resp.variant);
+    const variant = product.variants[0];
     console.log(`Setuping ProductId: ${product._id}, variantId: ${variant._id}`);
     const description = () => {
       if(desc.length > 0){
@@ -107,6 +130,8 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
       }
     };
 
+    const productMeta = {key: "productCode", value: data.productId};
+
     const productFields = {
         description: description(),
         facebookMsg: "",
@@ -114,7 +139,7 @@ export const buildProduct = async (shopId, productId, data, desc, mutations, opt
         isDeleted: false,
         isVisible: true,
         metaDescription: "",
-        metafields: [],
+        metafields: [productMeta],
         originCountry: "",
         pageTitle: "",
         pinterestMsg: "",

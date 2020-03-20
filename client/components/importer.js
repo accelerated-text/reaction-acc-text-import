@@ -68,11 +68,12 @@ class Importer extends Component {
         generateDescriptions(documentPlanId, dataRows, selectedLang)
             .then(variants => {
                 Object.entries(variants).forEach(([k, v]) => {
-                    buildProduct(this.props.shopId, k, this.state.dataRows[k], v, {
+                    buildProduct(this.props.shopId, this.state.dataRows[k], v, {
                         createProduct: this.props.createProduct,
                         createVariant: this.props.createVariant,
                         updateProduct: this.props.updateProduct,
-                        updateProductVariant: this.props.updateProductVariant
+                        updateProductVariant: this.props.updateProductVariant,
+                        findProduct: this.props.findProduct
                     })
                         .then(result => {
                             const { shopId, productId, variantId, imageUrl } = result;
