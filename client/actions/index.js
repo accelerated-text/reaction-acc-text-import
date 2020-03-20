@@ -67,13 +67,11 @@ export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
 };
 
-export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {apiURL: "http://reaction-api:3000"}) => {
+export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {}) => {
     console.log(`Attaching image to product ${productId}`);
-    const { apiURL } = options;
-    const uploadUrl = apiURL + "/assets/uploads";
     const { createMediaRecord } = mutations;
     const imageUpload = new Promise((resolve, reject) => {
-        Meteor.call("acc-text-import/fetchMedia", shopId, productId, variantId, imageUrl, uploadUrl, (error, result) => {
+        Meteor.call("acc-text-import/fetchMedia", productId, variantId, imageUrl, (error, result) => {
             if (error)
                 reject(error);
             else

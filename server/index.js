@@ -31,14 +31,11 @@ async function fetchImage(imageUrl){
 }
 
 Meteor.methods({
-    "acc-text-import/fetchMedia"(shopId, productId, variantId, imageUrl, uploadUrl){
-        check(shopId, String);
+    "acc-text-import/fetchMedia"(productId, variantId, imageUrl){
         check(productId, String);
         check(variantId, String);
         check(imageUrl, String);
-        check(uploadUrl, String);
-        const envString = JSON.stringify(process.env);
-        Logger.info(`Env: ${envString}`);
+        const uploadUrl = process.env.UPLOAD_URL;
         Logger.info(`Fetching image for ${productId}`);
         const fileRecord = Promise.await(fetchImage(imageUrl));
         Logger.info("Attaching metadata");
