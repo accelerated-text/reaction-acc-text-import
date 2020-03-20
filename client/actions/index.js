@@ -67,7 +67,7 @@ export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost
   return graphQLClient.request(DocumentPlansQuery).then(data => data.documentPlans.items);
 };
 
-export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {apiURL: "http://localhost:3000"}) => {
+export const attachImage = async(shopId, productId, variantId, imageUrl, mutations, options = {apiURL: "http://reaction-api:3000"}) => {
     console.log(`Attaching image to product ${productId}`);
     const { apiURL } = options;
     const uploadUrl = apiURL + "/assets/uploads";
@@ -82,9 +82,9 @@ export const attachImage = async(shopId, productId, variantId, imageUrl, mutatio
     });
 
     await imageUpload.then(fileRecord => {
-        console.log(`MediaRecord: ${fileRecord.document}`);
+        const clientMutationId = productId;
 
-        return createMediaRecord({ variables: {input: {shopId, mediaRecord: fileRecord.document}}});
+        return createMediaRecord({ variables: {input: {shopId, clientMutationId, mediaRecord: fileRecord.document}}});
     });
 
 

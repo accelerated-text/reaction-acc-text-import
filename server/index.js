@@ -3,7 +3,6 @@ import fetch from "node-fetch";
 import Logger from "@reactioncommerce/logger";
 
 import { FileRecord } from "@reactioncommerce/file-collections";
-import decodeOpaqueId from "/imports/utils/decodeOpaqueId.js";
 import Blob, { BUFFER  } from "./utils";
 import collections from "/imports/collections/rawCollections";
 
@@ -33,27 +32,28 @@ async function fetchImage(imageUrl){
 
 Meteor.methods({
     "acc-text-import/fetchMedia"(shopId, productId, variantId, imageUrl, uploadUrl){
+        check(shopId, String);
         check(productId, String);
         check(variantId, String);
         check(imageUrl, String);
         check(uploadUrl, String);
+        const envString = JSON.stringify(process.env);
+        Logger.info(`Env: ${envString}`);
         Logger.info(`Fetching image for ${productId}`);
         const fileRecord = Promise.await(fetchImage(imageUrl));
         Logger.info("Attaching metadata");
-        const { id: decodedShopId } = decodeOpaqueId(shopId);
-        const { id: decodedId } = decodeOpaqueId(productId);
-        const { id: decodedVariantId } = decodeOpaqueId(variantId);
         fileRecord.metadata = {
             priority: 20,
-            shopId: decodedShopId,
-            productId: decodedId,
-            variantId: decodedVariantId
+            productId,
+            variantId
         };
 
         Promise.await(fileRecord.upload({
                 chunkSize: 5 * 1024 * 1024,
                 endpoint: uploadUrl
         }));
+
+        Logger.info("Done");
 
         return fileRecord;
     }
