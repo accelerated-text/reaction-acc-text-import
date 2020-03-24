@@ -16,6 +16,7 @@ import Papa from "papaparse";
 import { buildProduct, generateDescriptions, withMutations, attachImage } from "../actions";
 import { LanguageSelect } from "./languageSelect";
 import { DocumentPlanSelect } from "./documentPlanSelect";
+import { Logo } from "./logo";
 
 class Importer extends Component {
     static propTypes = {
@@ -98,7 +99,7 @@ class Importer extends Component {
 
     render(){
         return (<div>
-                <h1>{i18next.t("admin.settings.accImportLabel")}</h1>
+                <Logo />
                 <div>
                 <ReactFileReader fileTypes={["*.csv"]} handleFiles={this.handleFiles}>
                 <button className='btn'>{i18next.t("admin.settings.uploadCSV")}</button>
