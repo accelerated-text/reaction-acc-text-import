@@ -99,7 +99,7 @@ class Importer extends Component {
 
     render(){
         return (<div>
-                <Logo />
+                <Logo></Logo>
                 <div>
                 <ReactFileReader fileTypes={["*.csv"]} handleFiles={this.handleFiles}>
                 <button className='btn'>{i18next.t("admin.settings.uploadCSV")}</button>

@@ -1,11 +1,7 @@
 import React, { Component } from "react";
 
-import AccTextLogo from "../assets/accelerated-text-logo.svg";
-
-class Logo extends Component {
+export class Logo extends Component {
     render(){
-        return (<img src={AccTextLogo} alt="Accelerated Text Logo"/>);
+        return (<img src="https://raw.githubusercontent.com/tokenmill/accelerated-text/master/front-end/assets/accelerated-text-logo.svg" alt="Accelerated Text Logo"/>);
     }
-}
-
-export default Logo;
+};
