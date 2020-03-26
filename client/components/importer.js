@@ -100,6 +100,7 @@ class Importer extends Component {
     render(){
         return (<div>
                 <Logo></Logo>
+                <form onSubmit={this.handleSubmit}>
                 <div className="MuiPaper-root MuiCard-root MuiPaper-elevation1 MuiPaper-rounded">
                 <h2>Import Tool</h2>
                 <ol className="MuiCardContent-root">
@@ -111,7 +112,7 @@ class Importer extends Component {
                 </li>
 
                 <li>
-                <form onSubmit={this.handleSubmit}>
+
                 <div>
                 <label>{i18next.t("admin.settings.descriptionType")}</label>
                 <DocumentPlanSelect onSelect={this.handleChange}/>
@@ -120,12 +121,12 @@ class Importer extends Component {
                 <label>{i18next.t("admin.settings.language")}</label>
                 <LanguageSelect onSelect={this.handleChange}/>
                 </div>
-                </form>
                 </li>
 
                 <li>
                 <div>
                 <button disabled={this.state.rowCount == 0}>{i18next.t("admin.settings.importProducts")}</button>
+
                 </div>
                 <span>{this.state.rowsSuccess} {i18next.t("admin.settings.productsImported")}</span>
                 /
@@ -135,6 +136,7 @@ class Importer extends Component {
                 </li>
                 </ol>
                 </div>
+                </form>
                 </div>);
     }
 }
