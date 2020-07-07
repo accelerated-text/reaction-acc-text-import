@@ -48,7 +48,7 @@ const readResult = async (resultId, options) => {
     result = await fetch(`${accTextURL}/${resultId}?format=raw`, {method: "get"})
           .then(response => response.json());
     if(result.ready){
-      return result.variants;
+        return {id: resultId, variants: result.variants};
     }
     console.log("NLG result is not ready yet. Retry after second");
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -57,7 +57,7 @@ const readResult = async (resultId, options) => {
 
 export const generateDescriptions = async (documentPlanId, dataRows, lang, options = {accTextURL: "http://localhost:3001/nlg"}) => {
     let readerFlagValues = {};
-    readerFlagValues[lang] = true;
+    readerFlagValues[lang.substring(0, 3)] = true;
     const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues };
     const {accTextURL} = options;
     const conf = {
@@ -65,9 +65,8 @@ export const generateDescriptions = async (documentPlanId, dataRows, lang, optio
         body: JSON.stringify(request),
         headers: new Headers({ "Content-Type": "application/json",})
     };
-
     const result = await fetch(`${accTextURL}/_bulk/`, conf).then(response => response.json());
-    return await readResult(result.resultId, options);
+    return await Promise.all(result.resultIds.map(id => readResult(id, options)));
 };
 
 export const getDocumentPlans = (options = {accTextGraphQLURL: "http://localhost:3001/_graphql"}) => {

@@ -67,34 +67,35 @@ class Importer extends Component {
 
         this.state.dataRows = dataRows;
         generateDescriptions(documentPlanId, dataRows, selectedLang)
-            .then(variants => {
-                Object.entries(variants).forEach(([k, v]) => {
-                    buildProduct(this.props.shopId, this.state.dataRows[k], v, {
+            .then(results => {
+                console.log(results);
+                results.map(result => {
+                    return buildProduct(this.props.shopId, this.state.dataRows[result.id], result.variants, {
                         createProduct: this.props.createProduct,
                         createVariant: this.props.createVariant,
                         updateProduct: this.props.updateProduct,
                         updateProductVariant: this.props.updateProductVariant,
                         findProduct: this.props.findProduct
-                    })
-                        .then(result => {
-                            const { shopId, productId, variantId, imageUrl } = result;
-                            if(imageUrl != "" && imageUrl !== undefined){
-                                return attachImage(shopId, productId, variantId, imageUrl, {createMediaRecord: this.props.createMediaRecord});
-                            }
-                            else {
-                                return true;
-                            }
-                        })
-                        .then(result => {
-                            if(result){
-                                this.setState({rowsSuccess: this.state.rowsSuccess + 1});
-                            }
-                            else{
-                                this.setState({rowsError: this.state.rowsError + 1});
-                            }
-                        });
-                });
-            });
+                    });
+                })
+                .map(r => {
+                    const { shopId, productId, variantId, imageUrl } = r;
+                    if(imageUrl != "" && imageUrl !== undefined){
+                        return attachImage(shopId, productId, variantId, imageUrl, {createMediaRecord: this.props.createMediaRecord});
+                    }
+                    else {
+                        return true;
+                    }
+                })
+               .map(r => {
+                   if(r){
+                       this.setState({rowsSuccess: this.state.rowsSuccess + 1});
+                   }
+                   else{
+                       this.setState({rowsError: this.state.rowsError + 1});
+                   }
+               });
+             });
     };
 
     render(){

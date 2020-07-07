@@ -1,1 +1,1 @@
-{documentPlans{items{id name}}}
+{documentPlans(kind: "Document"){items{id name}}}
