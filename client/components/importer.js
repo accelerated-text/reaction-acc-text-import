@@ -19,6 +19,7 @@ import { DocumentPlanSelect } from "./documentPlanSelect";
 import { Logo } from "./logo";
 
 class Importer extends Component {
+
     static propTypes = {
         client: PropTypes.object,
         history: PropTypes.shape({
@@ -36,7 +37,7 @@ class Importer extends Component {
             rowsSuccess: 0,
             rowsError: 0,
             documentPlans: [],
-            selectedLang: "English"
+            selectedLang: "English",
         };
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -60,13 +61,16 @@ class Importer extends Component {
     handleSubmit = e => {
         e.preventDefault();
         const { data, documentPlanId, selectedLang } = this.state;
+        if(Object.entries(data).length === 0) {
+            return;
+        }
         const dataRows = data.reduce((obj, item) => {
             obj[item.productId] = item;
             return obj;
         }, {});
 
         this.state.dataRows = dataRows;
-        generateDescriptions(documentPlanId, dataRows, selectedLang)
+        generateDescriptions(documentPlanId, dataRows, selectedLang, this.props.viewer)
             .then(results => {
                 console.log(results);
                 results.map(result => {

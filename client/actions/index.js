@@ -3,6 +3,7 @@ import React, { Component } from "react";
 
 import DocumentPlansQuery from "../queries/documentPlans.graphql";
 import { GraphQLClient } from "graphql-request";
+import useAuth from "/imports/client/ui/hooks/useAuth";
 
 import createProductMutation from "../queries/createProduct";
 import createProductVariantMutation from "../queries/createVariant";
@@ -20,6 +21,7 @@ export function withMutations(Component){
         const [updateProduct, { error: updateProductError }] = useMutation(updateProductMutation);
         const [updateProductVariant, { error: updateProductVariantError }] = useMutation(updateProductVariantMutation);
         const [createMediaRecord, { error: createMediaRecordError }] = useMutation(createMediaRecordMutation);
+        const { isViewerLoading, viewer } = useAuth();
 
         const apollo = useApolloClient();
 
@@ -27,6 +29,7 @@ export function withMutations(Component){
             const { data, error } =  await apollo.query({...input, query: findProductQuery});
             return data;
         };
+
         return <Component
         {...props}
         createProduct={createProduct}
@@ -35,10 +38,10 @@ export function withMutations(Component){
         updateProductVariant={updateProductVariant}
         createMediaRecord={createMediaRecord}
         findProduct={findProduct}
+        viewer={viewer}
             />;
     };
 }
-
 
 const readResult = async (resultId, options) => {
   const {accTextURL} = options;
@@ -55,7 +58,8 @@ const readResult = async (resultId, options) => {
   }
 };
 
-export const generateDescriptions = async (documentPlanId, dataRows, lang, options = {accTextURL: "http://localhost:3001/nlg"}) => {
+export const generateDescriptions = async (documentPlanId, dataRows, lang, viewer, options = {accTextURL: "http://localhost:3001/nlg"}) => {
+    console.log(viewer);
     let readerFlagValues = {};
     readerFlagValues[lang.substring(0, 3)] = true;
     const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues };
