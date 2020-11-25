@@ -62,6 +62,12 @@ export const generateDescriptions = async (documentPlanId, dataRows, lang, viewe
     console.log(viewer);
     let readerFlagValues = {};
     readerFlagValues[lang.substring(0, 3)] = true;
+    if(viewer !== undefined) {
+        readerFlagValues["Lc"] = true;
+    }
+    else {
+        readerFlagValues["Nc"] = true;
+    }
     const request = { documentPlanId: documentPlanId, dataRows: dataRows, readerFlagValues };
     const {accTextURL} = options;
     const conf = {
