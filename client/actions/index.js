@@ -109,7 +109,7 @@ export const attachImage = async (shopId, productId, variantId, imageUrl, mutati
 };
 
 export const buildProduct = async (shopId, data, desc, mutations, options = {}) => {
-    console.log(`Building product  with data: ${JSON.stringify(data)}, having descriptions: ${desc[0].original}`);
+    console.log(`Building product  with data: ${JSON.stringify(data)}, having descriptions: ${desc[0]}`);
 
     const title = data.title;
     const { createProduct, createVariant, updateProduct, updateProductVariant, createMediaRecord, findProduct } = mutations;
@@ -132,7 +132,7 @@ export const buildProduct = async (shopId, data, desc, mutations, options = {}) 
     console.log(`Setuping ProductId: ${product._id}, variantId: ${variant._id}`);
     const description = () => {
       if(desc.length > 0){
-        return _.shuffle(desc)[0].original;
+        return _.shuffle(desc)[0];
       }
       else{
         return "";
