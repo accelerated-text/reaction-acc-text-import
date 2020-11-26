@@ -72,8 +72,7 @@ class Importer extends Component {
         this.state.dataRows = dataRows;
         generateDescriptions(documentPlanId, dataRows, selectedLang, this.props.viewer)
             .then(results => {
-                console.log(results);
-                results.map(result => {
+                const productsFut = results.map(result => {
                     return buildProduct(this.props.shopId, this.state.dataRows[result.id], result.variants, {
                         createProduct: this.props.createProduct,
                         createVariant: this.props.createVariant,
@@ -81,24 +80,28 @@ class Importer extends Component {
                         updateProductVariant: this.props.updateProductVariant,
                         findProduct: this.props.findProduct
                     });
-                })
-                .map(r => {
-                    const { shopId, productId, variantId, imageUrl } = r;
-                    if(imageUrl != "" && imageUrl !== undefined){
-                        return attachImage(shopId, productId, variantId, imageUrl, {createMediaRecord: this.props.createMediaRecord});
-                    }
-                    else {
-                        return true;
-                    }
-                })
-               .map(r => {
-                   if(r){
-                       this.setState({rowsSuccess: this.state.rowsSuccess + 1});
-                   }
-                   else{
-                       this.setState({rowsError: this.state.rowsError + 1});
-                   }
-               });
+                });
+
+                Promise.all(productsFut).then(products => {
+                        products.map(r => {
+                            console.log("Result after building: " + r);
+                            const { shopId, productId, variantId, imageUrl } = r;
+                            if(imageUrl != "" && imageUrl !== undefined){
+                                return attachImage(shopId, productId, variantId, imageUrl, {createMediaRecord: this.props.createMediaRecord});
+                            }
+                            else {
+                                return true;
+                            }
+                        })
+                        .map(r => {
+                            if(r){
+                                this.setState({rowsSuccess: this.state.rowsSuccess + 1});
+                            }
+                            else{
+                                this.setState({rowsError: this.state.rowsError + 1});
+                            }
+                        });
+                });
              });
     };
 
